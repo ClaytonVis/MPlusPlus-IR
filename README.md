@@ -1,8 +1,7 @@
-# CPSC 411 - Assignment 4
-## Clayton Vis
+# M+ IR Generator
 
 ### Compile
 > ghc Main.hs
 
-###Run
+### Run
 > ./Main <file>
