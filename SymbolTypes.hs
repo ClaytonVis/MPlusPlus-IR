@@ -2,31 +2,56 @@ module SymbolTypes where
 
 import AST
 
+-----------------------------------------------------------------------------
+-- Symbol Description
+-----------------------------------------------------------------------------
+-- ARGUMENT (name?, type, dimensions)
+-- VARIABLE (name?, type, dimensions)
+-- FUNCTION (name?, argument_types, output_type)
+-----------------------------------------------------------------------------
 data SYM_DESC = ARGUMENT (String, M_type, Int)
         |VARIABLE (String, M_type, Int)
-        |FUNCTION (String, M_type, Int)
-        |DATATYPE String
-        |CONSTRUCTOR (String, [M_type], String)
+        |FUNCTION (String, [(M_type, Int)], M_type)
     deriving (Show)
 
+-----------------------------------------------------------------------------
+-- Symbol Information Description
+-----------------------------------------------------------------------------
+-- I_VARIABLE (level, offset, type, dimensions)
+-- I_FUNCTION (level, label, argument_types, output_type)
+-----------------------------------------------------------------------------
 data SYM_I_DESC = I_VARIABLE (Int, Int, M_type, Int)
         |I_FUNCTION (Int, String, [(M_type, Int)], M_type)
-        |I_CONSTRUCTOR (Int, [M_type], String)
-        |I_TYPE [String]
     deriving (Show)
 
-data ScopeType = L_PROG
-        |L_FUN M_type
-        |L_BLK
-        |L_CASE
-    deriving (Show)
-
+-----------------------------------------------------------------------------
+-- Symbol Values
+-----------------------------------------------------------------------------
+-- Var_attr (offset, type, dimension)
+-- Fun_atrr (label, arg_types, type)
+-----------------------------------------------------------------------------
 data SYM_VALUE = Var_attr (Int, M_type, Int)
         |Fun_attr (String, [(M_type, Int)], M_type)
-        |Con_attr (Int, [M_type], String)
-        |Typ_attr [String]
     deriving (Show)
 
+-----------------------------------------------------------------------------
+-- Scope Type
+-----------------------------------------------------------------------------
+-- Var_attr (offset, type, dimension)
+-- Fun_atrr (label, arg_types, type)
+-----------------------------------------------------------------------------
+data ScopeType = L_PROG 
+        | L_FUN M_type 
+        | L_BLK 
+        | L_CASE
+    
+-----------------------------------------------------------------------------
+-- Symbol Table
+-----------------------------------------------------------------------------
+-- Symbol_table (Size of Var Pool, Number of Args, 
+-----------------------------------------------------------------------------
 data SYM_TABLE = Symbol_table (Int, Int, [(String, SYM_VALUE)])
 
 type ST = [SYM_TABLE]
+
+data SYM_ERROR = Sym_error String
