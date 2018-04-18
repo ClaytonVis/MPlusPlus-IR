@@ -6,20 +6,20 @@ empty :: ST
 empty = []
 
 new_scope :: ScopeType -> ST -> ST
-new_scope type_ s = (Symbol_table(0, 0,[])):s
+new_scope type_ s = (Symbol_table(type_, 0, 0,[])):s
 
 insert :: Int -> ST -> SYM_DESC -> ST
 insert n [] d = error "Symbol table error: insertion before defining scope."
-insert n ((Symbol_table(nL, nA, sL)):rest) desc = case desc of
+insert n ((Symbol_table(st, nL, nA, sL)):rest) desc = case desc of
     ARGUMENT(str, t, dim) -> if (in_index_list str sL)
         then error ("Symbol table error: " ++ str ++ " is already defined.")
-        else (Symbol_table(nL, (nA + 1), ((str, Var_attr((nA + 4), t, dim)):sL)):rest)
+        else (Symbol_table(st, nL, (nA + 1), ((str, Var_attr(-(nA + 4), t, dim)):sL)):rest)
     VARIABLE(str, t, dim) -> if (in_index_list str sL)
         then error ("Symbol table error: " ++ str ++ " is already defined.")
-        else (Symbol_table((nL + 1), nA, ((str, Var_attr((nL + 1), t, dim)):sL)):rest)
+        else (Symbol_table(st, (nL + 1), nA, ((str, Var_attr((nL + 1), t, dim)):sL)):rest)
     FUNCTION(str, ts, t) -> if (in_index_list str sL)
         then error ("Symbol table error: " ++ str ++ " is already defined.")
-        else (Symbol_table(nL, nA, ((str, Fun_attr(getlabel str, ts, t)):sL)):rest)
+        else (Symbol_table(st, nL, nA, ((str, Fun_attr(getlabel str, ts, t)):sL)):rest)
     where
         --getlabel :: String -> String
         getlabel = ("fun_" ++)
@@ -44,7 +44,7 @@ lookupST s x = find 0 s
 
     find :: Int -> ST -> SYM_I_DESC
     find n [] = error ("Could not find " ++ x)
-    find n (Symbol_table(_,_,vs):r) = case find_level vs of 
+    find n (Symbol_table(_,_,_,vs):r) = case find_level vs of 
         Just v -> found n v
         Nothing -> find (n+1) r
 

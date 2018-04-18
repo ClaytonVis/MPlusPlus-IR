@@ -37,8 +37,7 @@ data SYM_VALUE = Var_attr (Int, M_type, Int)
 -----------------------------------------------------------------------------
 -- Scope Type
 -----------------------------------------------------------------------------
--- Var_attr (offset, type, dimension)
--- Fun_atrr (label, arg_types, type)
+-- L_FUN (return_type)
 -----------------------------------------------------------------------------
 data ScopeType = L_PROG 
         | L_FUN M_type 
@@ -48,9 +47,9 @@ data ScopeType = L_PROG
 -----------------------------------------------------------------------------
 -- Symbol Table
 -----------------------------------------------------------------------------
--- Symbol_table (Size of Var Pool, Number of Args, 
+-- Symbol_table (Type, Size of Local Var Pool, Number of Args, (Name var/fun, values)
 -----------------------------------------------------------------------------
-data SYM_TABLE = Symbol_table (Int, Int, [(String, SYM_VALUE)])
+data SYM_TABLE = Symbol_table (ScopeType, Int, Int, [(String, SYM_VALUE)])
 
 type ST = [SYM_TABLE]
 

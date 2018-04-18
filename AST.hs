@@ -3,13 +3,35 @@ module AST where
 The AST was laid out by Dr. Cockett in his documentation for the M+ specs
 -}
 
+-----------------------------------------------------------------------------
+-- 
+-----------------------------------------------------------------------------
 data M_prog = M_prog ([M_decl],[M_stmt])
   deriving (Eq, Ord, Show, Read)
 
+foldProg :: (([M_decl], [M_stmt]) -> r) -> M_prog -> r
+foldProg f (M_prog (decls, stmts)) = f (decls, stmts)
+-----------------------------------------------------------------------------
+-- Declarations:
+--  M_var (id, array_dimensions, type)
+--  M_fun (id, parameterlist, type, d, s) where are taken from a M_block (d, s)
+-----------------------------------------------------------------------------
 data M_decl = M_var (String,[M_expr],M_type)
     | M_fun (String,[(String,Int,M_type)],M_type,[M_decl],[M_stmt])
   deriving (Eq, Ord, Show, Read)
 
+foldDecl  :: ((String, [M_expr], M_type) -> r)
+        -> ((String, [(String, Int, M_type)], M_type, [r], [M_stmt]) -> r)
+        -> M_decl -> r
+foldDecl v f dec = case dec of
+    M_var (name, dim, t) -> v (name, dim, t)
+    M_fun (name, params, t, decs, stmts) -> f (name, params, t, (map repeat decs), stmts)
+        where
+            repeat = foldDecl v f
+
+-----------------------------------------------------------------------------
+-- 
+-----------------------------------------------------------------------------
 data M_stmt = M_ass (String,[M_expr],M_expr)
     | M_while (M_expr,M_stmt)
     | M_cond (M_expr,M_stmt,M_stmt)
@@ -19,8 +41,29 @@ data M_stmt = M_ass (String,[M_expr],M_expr)
     | M_block ([M_decl],[M_stmt])
   deriving (Eq, Ord, Show, Read)
 
+foldStmt :: ((String, [M_expr], M_expr) -> r) -> (M_expr -> [M_stmt] -> r)
+        -> (M_expr -> [M_stmt] -> [M_stmt] -> r) -> ((String, [M_expr]) -> r)
+        -> (M_expr -> r) -> (M_expr -> r) -> (([M_decl], [r]) -> r)
+        -> M_stmt -> r
+foldStmt a w c r p ret b stmt = case stmt of
+    M_ass (name, arry_dim, t) -> a (name, arry_dim, t)
+    M_while (expr, stmt') -> w expr (repeat stmt')
+    M_cond (expr, s1, s2) -> c expr (repeat s1) (repeat s2)
+    M_read (name, dim) -> r (name, dim)
+    M_print exp -> p exp
+    M_return exp -> ret exp
+    M_block (decls, stmts) -> b (decls, (map repeat stmts))
+        where
+            repeat = foldStmt a w c r p ret b
+
 data M_type = M_int | M_bool | M_real 
   deriving (Eq, Ord, Show, Read)
+
+foldType :: r -> r -> r -> M_type -> r
+foldType i b r t = case t of
+    M_int -> i
+    M_bool -> b
+    M_real -> r
 
 data M_expr = M_ival Int
     | M_rval Float
@@ -30,11 +73,44 @@ data M_expr = M_ival Int
     | M_app (M_operation,[M_expr])
   deriving (Eq, Ord, Show, Read)
 
+foldExp i r b s id a e = case e of
+    M_ival num -> i num
+    M_rval flo -> r flo
+    M_bval boo -> b boo
+    M_size (name, num) -> s (name, num)
+    M_id (name, exps) -> id name (map (foldExp i r b s id a) exps)
+    M_app (op, exps) -> a op (map (foldExp i r b s id a) exps)
+
 data M_operation = M_fn String
     | M_add | M_mul | M_sub | M_div | M_neg
     | M_lt | M_le | M_gt | M_ge | M_eq | M_not | M_and | M_or
     | M_float | M_floor | M_ceil
   deriving (Eq, Ord, Show, Read)
+
+foldOp :: (String -> r) -> r -> r -> r -> r -> r -> r -> r -> r
+          -> r -> r -> r -> r -> r -> r -> r -> r -> M_operation -> r 
+foldOp f a m s d n lt le gt ge e nt an or float flo ceil op = case op of
+    M_fn name -> f name
+    M_add -> a
+    M_mul -> m
+    M_sub -> s
+    M_div -> d
+    M_neg -> n
+    M_lt -> lt
+    M_le -> le
+    M_gt -> gt
+    M_ge -> ge
+    M_eq -> e
+    M_not -> nt
+    M_and -> an
+    M_or -> or
+    M_float -> float
+    M_floor -> flo
+    M_ceil -> ceil
+
+
+
+
 
 ind :: Int -> String
 ind 0 = ""

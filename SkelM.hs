@@ -174,7 +174,9 @@ transInt_Factor x = case x of
   Int_Factor3 expr -> M_app (M_float, [transExpr expr])
   Int_Factor4 expr -> M_app (M_floor, [transExpr expr])
   Int_Factor5 expr -> M_app (M_ceil, [transExpr expr])
-  Int_Factor6 id modifierlist -> M_id (transID id, transModifier_List modifierlist)
+  Int_Factor6 id modifierlist -> case modifierlist of
+    Modifier_List1 args -> M_app (M_fn (transID id), (transModifier_List modifierlist))
+    Modifier_ListArray_Dimensions arrDim -> M_id (transID id, (transModifier_List modifierlist))
   Int_FactorIVAL ival -> M_ival $ transIVAL ival
   Int_FactorRVAL rval -> M_rval $ transRVAL rval
   Int_FactorBVAL bval -> M_bval $ transBVAL bval

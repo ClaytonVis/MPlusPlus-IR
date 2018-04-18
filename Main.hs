@@ -23,7 +23,7 @@ import SkelM
 import PrintM
 import AbsM
 import AST
-
+import SymbolTable
 
 
 
@@ -84,4 +84,14 @@ main = do
     Bad msg -> putStrLn msg
 
 
+testC = "\nvar n:int;\nfun fib(n:int):int\n   {var z:int;\n    begin\n      if n =< 1 then z:= 1\n      else z:= fib(n-1) + fib(n-2);\n      return z;\n    end};\nbegin\n  read n;\n  print fib(n);\nend\n"
 
+tokC = myLexer testC
+parC = pProg tokC
+astC = transProg $ (\(Ok t) -> t) parC
+
+simpT = "var x[2]:int;\n fun exp(b:int):int\n { var z:int;\n begin if b=0 then z:= 1\n else z:= x[1] * exp(b-1);\n return z;\n end};\n begin\n read x[0];\n read x[1];\n print exp(x[0]);\n end"
+
+tokT = myLexer simpT
+parT = pProg tokT
+astT = transProg $ (\(Ok t) -> t) parT
