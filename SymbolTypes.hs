@@ -43,14 +43,14 @@ data ScopeType = L_PROG
         | L_FUN M_type 
         | L_BLK 
         | L_CASE
-    
+    deriving (Show)    
 -----------------------------------------------------------------------------
 -- Symbol Table
 -----------------------------------------------------------------------------
 -- Symbol_table (Type, Size of Local Var Pool, Number of Args, (Name var/fun, values)
 -----------------------------------------------------------------------------
 data SYM_TABLE = Symbol_table (ScopeType, Int, Int, [(String, SYM_VALUE)])
-
-type ST = [SYM_TABLE]
+    deriving (Show)
+type ST = (count, [SYM_TABLE])
 
 data SYM_ERROR = Sym_error String
