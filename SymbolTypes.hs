@@ -51,6 +51,7 @@ data ScopeType = L_PROG
 -----------------------------------------------------------------------------
 data SYM_TABLE = Symbol_table (ScopeType, Int, Int, [(String, SYM_VALUE)])
     deriving (Show)
-type ST = (count, [SYM_TABLE])
+type ST = [SYM_TABLE]
+type CST = (Int, ST)
 
 data SYM_ERROR = Sym_error String
