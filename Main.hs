@@ -23,7 +23,7 @@ import SkelM
 import PrintM
 import AbsM
 import AST
-import SymbolTable
+import SemIR
 import GenIR
 
 
@@ -50,8 +50,8 @@ run v p s = let ts = myLLexer s in case p ts of
                           exitFailure
            Ok  tree -> do putStrLn "\nParse Successful!"
                           let astTree = tree
-                          let ir = convIR astTree
-                          putStrLn ir
+                          putStrLn $ show astTree
+                          putStrLn "Test over"
                           exitSuccess
 
 
@@ -81,7 +81,8 @@ main = do
   case parse of
     Ok tree -> do
       let astTr = transProg tree
-      putStrLn $ ppProg astTr
+      let ir = convProg astTr
+      putStrLn $ show ir
     Bad msg -> putStrLn msg
 
 
