@@ -80,7 +80,10 @@ main = do
   let parse = pProg toks
   case parse of
     Ok tree -> do
+      putStrLn "---------\n-- AST --\n---------"
       let astTr = transProg tree
+      putStrLn $ show astTr
+      putStrLn "\n\n--------\n-- IR --\n--------"
       let ir = convProg astTr
       putStrLn $ show ir
     Bad msg -> putStrLn msg

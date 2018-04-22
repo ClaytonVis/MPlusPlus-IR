@@ -166,93 +166,120 @@ expr_ir exp (n,st) = case exp of
     M_app (mop, exprs) -> [(app, ty)]
         where
             iexp = exprs_ir exprs (n,st)
-            (iop, ty) = mop_ir mop (typeStripped iexp) (n,st)
+            (iop, ty) = mop_ir mop iexp (n,st)
             sexp = expStripped iexp
             app = IAPP(iop, sexp)
 
-mop_ir :: M_operation -> [M_type] -> CST -> (I_opn, M_type)
+compareArgs :: [(I_expr, M_type)] -> [(M_type, Int)] -> Bool
+compareArgs [] [] = True
+compareArgs _ [] = False
+compareArgs [] _ = False
+compareArgs ((inExpr, inType):inArgs) ((reqType, reqSize):reqArgs) = case inType == reqType of
+    True -> case inExpr of
+        IID (_, _, dims) -> case (length dims) == reqSize of
+            True -> compareArgs inArgs reqArgs
+            False -> False
+        _ -> compareArgs inArgs reqArgs
+    False -> False 
+ 
+mop_ir :: M_operation -> [(I_expr, M_type)] -> CST -> (I_opn, M_type)
 mop_ir op args (n, st) = case op of
---    M_fn name -> 
-    M_add -> case args of
+    M_fn name -> res
+        where
+            I_FUNCTION(level, label, argsReq, ty) = lookupST st name
+            res = case compareArgs args argsReq of
+                False -> error ("Invalid parameters for: " ++ name)
+                True -> (ICALL(label, level), ty)
+            -- I_FUNCTION (level, label, argument_types, output_type)
+            -- arg_types :: [(M_type, Int)]
+    M_add -> case check1DArgs args of
         (M_int):(M_int):[] -> (IADD, M_int)
         (M_int):(M_real):[] -> (IADD_F, M_real)
         (M_real):(M_int):[] -> (IADD_F, M_real)
         (M_real):(M_real):[] -> (IADD_F, M_real)
         _ -> error "Invalid ADD operation"
-    M_mul -> case args of
+    M_mul -> case check1DArgs args of
         (M_int):(M_int):[] -> (IMUL, M_int)
         (M_int):(M_real):[] -> (IMUL_F, M_real)
         (M_real):(M_int):[] -> (IMUL_F, M_real)
         (M_real):(M_real):[] -> (IMUL_F, M_real)
         _ -> error "Invalid MUL operation"
-    M_sub -> case args of
+    M_sub -> case check1DArgs args of
         (M_int):(M_int):[] -> (ISUB, M_int)
         (M_int):(M_real):[] -> (ISUB_F, M_real)
         (M_real):(M_int):[] -> (ISUB_F, M_real)
         (M_real):(M_real):[] -> (ISUB_F, M_real)
         _ -> error "Invalid SUB operation"
-    M_div -> case args of
+    M_div -> case check1DArgs args of
         (M_int):(M_int):[] -> (IDIV, M_int)
         (M_int):(M_real):[] -> (IDIV_F, M_real)
         (M_real):(M_int):[] -> (IDIV_F, M_real)
         (M_real):(M_real):[] -> (IDIV_F, M_real)
         _ -> error "Invalid DIV operation"
-    M_neg -> case args of
+    M_neg -> case check1DArgs args of
         (M_int):[] -> (INEG, M_int)
         (M_real):[] -> (INEG_F, M_int)
         _ -> error "Invalid NEG operation"
-    M_lt -> case args of
+    M_lt -> case check1DArgs args of
         (M_int):(M_int):[] -> (ILT, M_bool)
         (M_int):(M_real):[] -> (ILT_F, M_bool)
         (M_real):(M_int):[] -> (ILT_F, M_bool)
         (M_real):(M_real):[] -> (ILT_F, M_bool)
         _ -> error "Invalid LT operation"
-    M_le -> case args of
+    M_le -> case check1DArgs args of
         (M_int):(M_int):[] -> (ILE, M_bool)
         (M_int):(M_real):[] -> (ILE_F, M_bool)
         (M_real):(M_int):[] -> (ILE_F, M_bool)
         (M_real):(M_real):[] -> (ILE_F, M_bool)
         _ -> error "Invalid LE operation"
-    M_gt -> case args of
+    M_gt -> case check1DArgs args of
         (M_int):(M_int):[] -> (IGT, M_bool)
         (M_int):(M_real):[] -> (IGT_F, M_bool)
         (M_real):(M_int):[] -> (IGT_F, M_bool)
         (M_real):(M_real):[] -> (IGT_F, M_bool)
         _ -> error "Invalid GT operation"
-    M_ge -> case args of
+    M_ge -> case check1DArgs args of
         (M_int):(M_int):[] -> (IGE, M_bool)
         (M_int):(M_real):[] -> (IGE_F, M_bool)
         (M_real):(M_int):[] -> (IGE_F, M_bool)
         (M_real):(M_real):[] -> (IGE_F, M_bool)
         _ -> error "Invalid GE operation"
-    M_eq -> case args of
+    M_eq -> case check1DArgs args of
         (M_int):(M_int):[] -> (IEQ, M_bool)
         (M_int):(M_real):[] -> (IEQ_F, M_bool)
         (M_real):(M_int):[] -> (IEQ_F, M_bool)
         (M_real):(M_real):[] -> (IEQ_F, M_bool)
         _ -> error "Invalid EQ operation"
-    M_not -> case args of
+    M_not -> case check1DArgs args of
         (M_bool):(M_bool):[] -> (INOT, M_bool)
         _ -> error "Invalid NOT operation"
-    M_and -> case args of
+    M_and -> case check1DArgs args of
         (M_bool):(M_bool):[] -> (IAND, M_bool)
         _ -> error "Invalid AND operation"
-    M_or -> case args of
+    M_or -> case check1DArgs args of
         (M_bool):(M_bool):[] -> (IOR, M_bool)
         _ -> error "Invalid OR operation"
-    M_float -> case args of
+    M_float -> case check1DArgs args of
         (M_int):[] -> (IFLOAT, M_real)
         (M_real):[] -> (IFLOAT, M_real)
         _ -> error "Invalid FLOAT operation"
-    M_floor -> case args of
+    M_floor -> case check1DArgs args of
         (M_real):[] -> (IFLOOR, M_int)
         (M_int):[] -> (IFLOOR, M_int)
         _ -> error "Invalid FLOOR operation"
-    M_ceil -> case args of
+    M_ceil -> case check1DArgs args of
         (M_real):[] -> (ICEIL, M_int)
         (M_int):[] -> (ICEIL, M_int)
         _ -> error "Invalid CEIL operation"
 
+
+
+check1DArgs :: [(I_expr, M_type)] -> [M_type]
+check1DArgs [] = []
+check1DArgs ((IID(_, _,dims),ty):rest) = case dims of
+    [] -> ty:(check1DArgs rest)
+    _ -> error "Expected variable, not array"
+check1DArgs ((_,ty):rest) = ty:(check1DArgs rest)
 
 
 
